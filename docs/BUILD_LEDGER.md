@@ -43,3 +43,9 @@ Append-only record of milestones (M), issues (I) and questions (Q).
 
 ## Q-001: Licence
 - The proposal promises a public repository and a possible open-source Univer integration. No licence file has been added; the choice is the owner's.
+
+## M-004: First run on GitHub and the Vercel project (9 November 2026)
+- **Pull request:** #1, `build/officeproof-v1` into `main`. Not merged.
+- **GitHub Action verified on GitHub:** the CI workflow ran on the pull request and every step passed: `npm ci`, `npm test`, `npm run typecheck`, `npm run build`, `npm run build:cli`, then the Action itself (`uses: ./`) on `samples/officeproof.json`, and the report upload. This replaces the "has not yet run on GitHub" note in M-003.
+- **Vercel (owner's request: "create the vercel"):** project `officeprooflab` created and linked to the repository. The first deployment was built from `build/officeproof-v1` (commit ce68df1); as the first deployment of a new project, Vercel made it the production deployment. The build passed. The landing page was fetched from `https://officeprooflab.vercel.app` and returned 200 with the security headers.
+- **Not yet working when hosted:** accounts, uploads and saved runs, because no `DATABASE_URL` is set on the project. The owner adds it (and, optionally, `ANT_LING_API_KEY`); no secret was set by the build agent. Sign-up on the hosted app has therefore not been exercised.

@@ -26,10 +26,9 @@ Each promise in `docs/PROPOSAL.md`, and the feature that meets it. "Status" is f
 | "Part of the toolkit could be published as a reusable open-source Univer integration" | `lib/engine` is self-contained (no app code) so it can be published as a package. Not yet published. |
 
 ## Status (9 November 2026)
-Every row above is built and was exercised in a real browser or from the command line; the evidence is in `docs/BUILD_LEDGER.md` (M-002, M-003). Three things are not yet verified end to end:
+Every row above is built and was exercised in a real browser or from the command line; the evidence is in `docs/BUILD_LEDGER.md` (M-002, M-003). The GitHub Action has run on GitHub (M-004). Two things are not yet verified end to end:
 - AI-assisted observations against the live Ling 3.2 Flash service (tested with a stand-in server only).
-- The GitHub Action running on GitHub (the same command was run locally, including on Node 20).
-- A hosted deployment.
+- Accounts and runs on the hosted deployment. The Vercel build passes and the landing page is live, but the project has no database until the owner sets `DATABASE_URL`.
 
 ## Not in this release
 - Importing files into Univer with Univer's own exchange service (a Pro, server-side feature). OfficeProof Lab reads the Office files itself and builds Univer data from them.
