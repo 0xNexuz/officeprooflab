@@ -1,0 +1,24 @@
+# Copy to .github/workflows/officeproof.yml in the repository that generates your files.
+name: Office files
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  officeproof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Your own step that writes the .xlsx, .docx or .pptx files goes here.
+      - run: npm ci && npm run generate
+      - uses: 0xNexuz/officeprooflab@main
+        with:
+          config: officeproof.json
+          # Both optional. Without them the results stay in the build log and the uploaded reports.
+          url: ${{ vars.OFFICEPROOF_URL }}
+          token: ${{ secrets.OFFICEPROOF_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: officeproof-reports
+          path: officeproof-reports
