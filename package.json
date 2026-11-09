@@ -1,0 +1,43 @@
+{
+  "name": "officeproof-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.6" },
+  "bin": { "officeproof": "dist/officeproof.cjs" },
+  "scripts": {
+    "dev": "next dev -H 127.0.0.1",
+    "build": "next build",
+    "start": "next start -H 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test:postgres": "node --experimental-strip-types tests/postgres.integration.mjs",
+    "samples": "node samples/generate.mjs",
+    "build:cli": "node scripts/build-cli.mjs",
+    "check:samples": "node dist/officeproof.cjs check --config samples/officeproof.json"
+  },
+  "dependencies": {
+    "@univerjs/preset-docs-core": "1.3.1",
+    "@univerjs/preset-sheets-core": "1.3.1",
+    "@univerjs/presets": "1.3.1",
+    "@univerjs/slides": "1.3.1",
+    "@univerjs/slides-ui": "1.3.1",
+    "fast-xml-parser": "^5.2.0",
+    "fflate": "^0.8.2",
+    "next": "^15.5.0",
+    "pg": "^8.23.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "docx": "^9.5.0",
+    "esbuild": "^0.25.0",
+    "exceljs": "^4.4.0",
+    "pptxgenjs": "^4.0.0",
+    "typescript": "^5.7.3"
+  }
+}
