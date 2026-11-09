@@ -1,0 +1,60 @@
+{
+  "project": "Month-end pack",
+  "cases": [
+    {
+      "name": "Revenue summary workbook",
+      "file": "generated/revenue-summary.xlsx",
+      "reference": "reference/revenue-summary.reference.xlsx",
+      "rules": [
+        { "cell": "Summary!E14", "sumOf": "E4:E13" },
+        { "cell": "Summary!B14", "equals": 1359 },
+        { "headers": "Summary!A3:G3", "equal": ["Month", "Orders", "Units", "Avg price", "Revenue", "Costs", "Margin"] },
+        { "sheet": "Forecast" }
+      ],
+      "expect": "fail"
+    },
+    {
+      "name": "Revenue summary workbook, fixed",
+      "file": "fixed/revenue-summary.xlsx",
+      "reference": "reference/revenue-summary.reference.xlsx",
+      "rules": [
+        { "cell": "Summary!E14", "sumOf": "E4:E13" },
+        { "cell": "Summary!B14", "equals": 1359 }
+      ],
+      "expect": "pass"
+    },
+    {
+      "name": "Client statement letter",
+      "file": "generated/client-statement.docx",
+      "reference": "reference/client-statement.reference.docx",
+      "rules": [
+        { "heading": "Transactions" },
+        { "contains": "Statement of account" },
+        { "tables": 1 }
+      ],
+      "expect": "fail"
+    },
+    {
+      "name": "Client statement letter, fixed",
+      "file": "fixed/client-statement.docx",
+      "reference": "reference/client-statement.reference.docx",
+      "expect": "pass"
+    },
+    {
+      "name": "Board update deck",
+      "file": "generated/board-update.pptx",
+      "reference": "reference/board-update.reference.pptx",
+      "rules": [
+        { "slides": 6 },
+        { "slide": 1, "title": "Board update, October 2026" }
+      ],
+      "expect": "fail"
+    },
+    {
+      "name": "Board update deck, fixed",
+      "file": "fixed/board-update.pptx",
+      "reference": "reference/board-update.reference.pptx",
+      "expect": "pass"
+    }
+  ]
+}
