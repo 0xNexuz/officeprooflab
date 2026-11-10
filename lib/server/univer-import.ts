@@ -21,7 +21,12 @@ let loadError = '';
  */
 function load(): Promise<Exchange | null> {
   if (process.env.OFFICEPROOF_UNIVER_IMPORT === 'off') { loadError = 'off'; return Promise.resolve(null); }
-  loading ??= import('@univerjs-pro/exchange-node').catch(error => { loadError = error instanceof Error ? error.message : String(error); return null; });
+  loading ??= import('@univerjs-pro/exchange-node').catch(error => {
+    loadError = error instanceof Error ? error.message : String(error);
+    // Said once in the server log, so whoever runs the server can see why the viewer is doing without the import.
+    console.warn(`Univer's Office import is not available on this server: ${loadError}`);
+    return null;
+  });
   return loading;
 }
 
