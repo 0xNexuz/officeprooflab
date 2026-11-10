@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { strToU8, zipSync } from 'fflate';
-import { compareRuns, evaluate, readModel, runChecks, toHtml, toJUnit, toMarkdown, validateRules, EngineError } from '../lib/engine/index.ts';
+import { compareRuns, describeRule, evaluate, readModel, runChecks, toHtml, toJUnit, toMarkdown, validateRules, EngineError } from '../lib/engine/index.ts';
 import { miniDocx, miniPptx, miniXlsx } from './helpers/mini.mjs';
 
 const sample = (name) => new Uint8Array(readFileSync(new URL(`../samples/${name}`, import.meta.url)));
@@ -288,4 +288,12 @@ test('reports: Markdown, JUnit and HTML carry the verdict and escape file conten
   assert.equal(junit.includes('<script>'), false);
   assert.match(md, /\*\*FAIL: 1 confirmed failure/);
   assert.match(md, /A skipped or unverified check is not a pass/);
+});
+
+test('a rule reads as a sentence, with the noun matching its number', () => {
+  assert.equal(describeRule({ tables: 1 }), 'The document has exactly 1 table');
+  assert.equal(describeRule({ tables: 2 }), 'The document has exactly 2 tables');
+  assert.equal(describeRule({ slides: { min: 1 } }), 'The deck has at least 1 slide');
+  assert.equal(describeRule({ slides: { min: 1, max: 12 } }), 'The deck has at least 1 and at most 12 slides');
+  assert.equal(describeRule({ words: { max: 600 } }), 'The document has at most 600 words');
 });
