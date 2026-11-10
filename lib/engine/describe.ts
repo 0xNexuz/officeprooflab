@@ -16,9 +16,11 @@ export function describeRule(rule: Rule): string {
   if ('contains' in rule) return `The text "${clip(rule.contains, 60)}" appears`;
   if ('notContains' in rule) return `The text "${clip(rule.notContains, 60)}" does not appear`;
   const span = (value: number | { min?: number; max?: number }) => typeof value === 'number' ? `exactly ${value}` : [value.min !== undefined ? `at least ${value.min}` : '', value.max !== undefined ? `at most ${value.max}` : ''].filter(Boolean).join(' and ') || 'any number of';
-  if ('words' in rule) return `The document has ${span(rule.words)} words`;
-  if ('tables' in rule) return `The document has ${span(rule.tables)} tables`;
-  if ('slides' in rule) return `The deck has ${span(rule.slides)} slides`;
+  // "exactly 1 table", "at least 1 slide", "at most 3 tables": the noun follows the last number named.
+  const count = (value: number | { min?: number; max?: number }, noun: string) => `${span(value)} ${(typeof value === 'number' ? value : value.max ?? value.min) === 1 ? noun : `${noun}s`}`;
+  if ('words' in rule) return `The document has ${count(rule.words, 'word')}`;
+  if ('tables' in rule) return `The document has ${count(rule.tables, 'table')}`;
+  if ('slides' in rule) return `The deck has ${count(rule.slides, 'slide')}`;
   return `Slide ${rule.slide} is titled "${clip(rule.title, 60)}"`;
 }
 
