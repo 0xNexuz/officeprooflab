@@ -2,16 +2,23 @@ import { readModel } from '@/lib/engine/run';
 import { json } from '@/lib/server/http';
 import { projectRoute } from '@/lib/server/route';
 import { StoreError } from '@/lib/server/store';
+import { importWithUniver } from '@/lib/server/univer-import';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const MAX_VIEW_CELLS = 100_000;
+/** A hosted response may not be much larger than this, so Univer's reading is added only when it still fits. */
+const MAX_RESPONSE_CHARS = 4_000_000;
 
 type Params = { project: string; run: string };
 
-/** The run's file, and its reference when there is one, read into the engine's model so the browser can open them in Univer. */
+/**
+ * The run's file, and its reference when there is one, read into the engine's model so the browser can open them in
+ * Univer. `univer` is the same file read by Univer's own import, for a view with the file's design; it is null when
+ * that import is unavailable, and the browser then builds the view from the model.
+ */
 export const GET = projectRoute<Params>(async (_request, { user, store, projectId }, params) => {
   const file = await store.runFile(user.id, projectId, params.run);
   if (!file.bytes) throw new StoreError('not_found', 'The file for this run is no longer stored. Its report is still available.');
@@ -22,5 +29,7 @@ export const GET = projectRoute<Params>(async (_request, { user, store, projectI
   }
   let reference = null;
   if (file.reference) { try { const parsed = readModel(new Uint8Array(file.reference)); if (parsed.kind === model.kind) reference = parsed; } catch { /* a reference that no longer reads is left out */ } }
-  return json({ model, reference });
+  const room = MAX_RESPONSE_CHARS - JSON.stringify({ model, reference }).length;
+  const univer = room > 0 ? await importWithUniver(new Uint8Array(file.bytes), model.kind, room) : null;
+  return json({ model, reference, univer });
 });

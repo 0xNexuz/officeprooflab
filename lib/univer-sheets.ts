@@ -5,12 +5,12 @@ import UniverPresetSheetsCoreEnUS from '@univerjs/preset-sheets-core/locales/en-
 import { createUniver, LocaleType, mergeLocales, type ICellData, type IStyleData, type IWorkbookData } from '@univerjs/presets';
 import '@univerjs/preset-sheets-core/lib/index.css';
 import { colName, parseCell } from './engine/a1.ts';
+import { flaggedCells, markWorkbook } from './imported/sheet.ts';
+import { toneOf, type Tone } from './imported/tone.ts';
 import type { Recalculation } from './engine/recalc.ts';
 import { cellKey } from './engine/xlsx.ts';
 import type { Cell, CellValue, Finding, Sheet, Where, Workbook } from './engine/types.ts';
 
-type Tone = 'fail' | 'warn' | 'info' | 'ai';
-const RANK: Record<Tone, number> = { fail: 4, warn: 3, ai: 2, info: 1 };
 const edge = (rgb: string, s: number) => ({ s, cl: { rgb } });
 const box = (rgb: string, s = 8) => ({ t: edge(rgb, s), b: edge(rgb, s), l: edge(rgb, s), r: edge(rgb, s) });
 const TONES: Record<Tone, IStyleData> = {
@@ -19,26 +19,11 @@ const TONES: Record<Tone, IStyleData> = {
   ai: { bg: { rgb: '#ECE8FB' }, bd: box('#5B3FD6', 4) },
   info: { bg: { rgb: '#EFEDE8' }, bd: box('#5C5C60', 1) },
 };
-export const toneOf = (finding: Finding): Tone => finding.label === 'ai' ? 'ai' : finding.severity === 'fail' ? 'fail' : finding.severity === 'warn' ? 'warn' : 'info';
-
-function flags(findings: Finding[]) {
-  const map = new Map<string, Tone>();
-  for (const finding of findings) {
-    if (finding.where.kind !== 'cell') continue;
-    const tone = toneOf(finding);
-    for (const ref of finding.where.refs ?? [finding.where.ref]) {
-      const at = parseCell(ref);
-      if (!at) continue;
-      const key = cellKey(finding.where.sheet, at.r, at.c);
-      if (!map.has(key) || RANK[tone] > RANK[map.get(key)!]) map.set(key, tone);
-    }
-  }
-  return map;
-}
+export { toneOf };
 
 /** The workbook as Univer data. Formulas keep their stored result so the sheet reads at once; Univer then recalculates. */
 export function sheetData(workbook: Workbook, findings: Finding[]): Partial<IWorkbookData> {
-  const marked = flags(findings);
+  const marked = flaggedCells(findings);
   const styles: Record<string, IStyleData> = {};
   const styleFor = (tone: Tone | undefined, cell: Cell) => {
     if (!tone && !cell.fmt) return undefined;
@@ -89,13 +74,17 @@ export type SheetView = {
 
 const ERROR = /^#[A-Z0-9/!?_.]+$/;
 
-export function mountSheet(container: HTMLElement, workbook: Workbook, findings: Finding[]): SheetView {
+/**
+ * Mounts the workbook. `imported` is the file as read by Univer's own import; when it is there the sheet keeps the
+ * file's formatting, and otherwise the sheet is built from the engine's reading of the cells.
+ */
+export function mountSheet(container: HTMLElement, workbook: Workbook, findings: Finding[], imported: IWorkbookData | null = null): SheetView {
   const { univer, univerAPI } = createUniver({
     locale: LocaleType.EN_US,
     locales: { [LocaleType.EN_US]: mergeLocales(UniverPresetSheetsCoreEnUS) },
     presets: [UniverSheetsCorePreset({ container, header: false, toolbar: false, formulaBar: true, contextMenu: false, footer: { sheetBar: true, statisticBar: false, menus: false, zoomSlider: false } })],
   });
-  const book = univerAPI.createWorkbook(sheetData(workbook, findings));
+  const book = univerAPI.createWorkbook(imported ? markWorkbook(imported, findings, TONES, 'officeproof-workbook') : sheetData(workbook, findings));
   const listeners: (() => void)[] = [];
   const editSubscription = univerAPI.addEvent(univerAPI.Event.SheetEditEnded, () => { setTimeout(() => listeners.forEach(fn => fn()), 60); });
   return {
