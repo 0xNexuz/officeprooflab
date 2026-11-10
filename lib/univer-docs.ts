@@ -5,10 +5,16 @@ import UniverPresetDocsCoreEnUS from '@univerjs/preset-docs-core/locales/en-US';
 import { BooleanNumber, createUniver, LocaleType, mergeLocales, type IDocumentData, type IParagraph, type ITextRun, type ITextStyle } from '@univerjs/presets';
 import '@univerjs/preset-docs-core/lib/index.css';
 import type { DocumentModel, Finding, Where } from './engine/types.ts';
-import { toneOf } from './univer-sheets.ts';
+import { importedDocLayout } from './imported/doc.ts';
+import { toneOf } from './imported/tone.ts';
 
 const TONE_STYLE: Record<ReturnType<typeof toneOf>, ITextStyle> = {
   fail: { bg: { rgb: '#FAC9C5' } }, warn: { bg: { rgb: '#FFDDBB' } }, ai: { bg: { rgb: '#DDD6FA' } }, info: { bg: { rgb: '#E3E1DC' } },
+};
+/** The same tones for a document read by Univer's import: a text background, and a fill for a flagged table cell. */
+const IMPORTED_STYLE = {
+  fail: { text: TONE_STYLE.fail, cell: '#FAC9C5' }, warn: { text: TONE_STYLE.warn, cell: '#FFDDBB' },
+  ai: { text: TONE_STYLE.ai, cell: '#DDD6FA' }, info: { text: TONE_STYLE.info, cell: '#E3E1DC' },
 };
 type StyledRange = { start: number; end: number; style: ITextStyle };
 
@@ -83,10 +89,15 @@ export function docData(id: string, doc: DocumentModel, findings: Finding[]): Do
     body: { dataStream: full, paragraphs, textRuns: toRuns(ranges, full.length - 2), sectionBreaks: [{ sectionId: 's0', startIndex: full.length - 1 }] } } };
 }
 
-export type DocView = { select: (where: Where) => void; dispose: () => void };
+/** `original` is true when the document is shown as Univer's import read it, with the file's own design. */
+export type DocView = { select: (where: Where) => void; dispose: () => void; original: boolean };
 
-/** Mounts the document read-only: any command that would change it is cancelled, while selecting and scrolling still work. */
-export function mountDoc(container: HTMLElement, doc: DocumentModel, findings: Finding[]): DocView {
+/**
+ * Mounts the document read-only: any command that would change it is cancelled, while selecting and scrolling still
+ * work. `imported` is the file as read by Univer's own import. It is used when every finding can be placed on it;
+ * otherwise the document is rebuilt from the engine's reading, where every finding always can.
+ */
+export function mountDoc(container: HTMLElement, doc: DocumentModel, findings: Finding[], imported: IDocumentData | null = null): DocView {
   const { univer, univerAPI } = createUniver({
     locale: LocaleType.EN_US,
     locales: { [LocaleType.EN_US]: mergeLocales(UniverPresetDocsCoreEnUS) },
@@ -95,14 +106,26 @@ export function mountDoc(container: HTMLElement, doc: DocumentModel, findings: F
   const guard = univerAPI.addEvent(univerAPI.Event.BeforeCommandExecute, event => {
     if (/^doc\.(command|mutation)\./.test(event.id) && !/(copy|select|cursor|scroll|zoom|focus)/i.test(event.id)) event.cancel = true;
   });
-  const layout = docData('officeproof-document', doc, findings);
+  const faithful = imported ? importedDocLayout('officeproof-document', imported, doc, findings, IMPORTED_STYLE) : null;
+  const layout = faithful ?? docData('officeproof-document', doc, findings);
   univerAPI.createDocument(layout.data);
+  // Univer shows a formatting bar beside a selection. Nothing here can be edited, so it is kept out of sight.
+  document.documentElement.classList.add('officeproof-reading');
+  // A page read from the file can be wider than the viewer; it is scaled down so a whole line shows.
+  const pageWidth = faithful?.data.documentStyle?.pageSize?.width;
+  const fit = () => {
+    if (!pageWidth || !container.clientWidth) return;
+    const zoomRatio = Math.max(0.4, Math.min(1, Math.floor((container.clientWidth - 36) / pageWidth * 100) / 100));
+    try { void univerAPI.executeCommand('doc.operation.set-zoom-ratio', { unitId: 'officeproof-document', zoomRatio }); } catch { /* fitting is a convenience */ }
+  };
+  const timers = faithful ? [setTimeout(fit, 150), setTimeout(fit, 900)] : [];
   return {
     select(where) {
       const at = layout.place(where);
       if (!at) return;
       try { univerAPI.getActiveDocument()?.setSelection(at[0], Math.max(at[0], at[1])); } catch { /* selection is a convenience */ }
     },
-    dispose() { guard.dispose(); univer.dispose(); },
+    dispose() { timers.forEach(clearTimeout); document.documentElement.classList.remove('officeproof-reading'); guard.dispose(); univer.dispose(); },
+    original: Boolean(faithful),
   };
 }

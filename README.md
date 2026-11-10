@@ -25,6 +25,10 @@ It works on `.xlsx`, `.docx` and `.pptx`, in the browser and in CI. Built with t
 
 ![A failing workbook run with the flagged cell selected in Univer Sheets](docs/screens/run-workbook.jpg)
 
+**A generated letter fails.** The table's total says 4,360.50, but its rows add up to 4,630.50. The document is read by Univer's import, so it opens in Univer Docs with its own headings and table.
+
+![A failing document run in Univer Docs, with the wrong total marked in the table](docs/screens/run-document.jpg)
+
 **A deck compared with its approved reference.** A text box runs off slide 4, and slide 2 lines up with the reference at 68%.
 
 ![A failing deck run in Univer Slides, with the reference's boxes drawn in violet](docs/screens/run-deck.jpg)
@@ -90,11 +94,20 @@ The [integration guide](docs/INTEGRATION.md) covers the config file, rules, othe
 | Univer | In OfficeProof Lab |
 | --- | --- |
 | Formula engine | Recalculates each workbook with no editor open, on the server, on the command line and in CI |
+| Office import (Univer Pro) | Reads each file into Univer's own format on the server, so the viewer shows the file with its own formatting |
 | Univer Sheets | Opens the workbook with flagged cells marked. You can edit a cell and rerun the checks on the edited copy |
-| Univer Docs | Opens the document with flagged paragraphs and tables marked |
+| Univer Docs | Opens the document with flagged paragraphs and table cells marked |
 | Univer Slides | Opens the deck with flagged boxes outlined and the reference's boxes drawn over it |
 
-All Univer packages are open source (version 1.3.1). No licence key is needed. OfficeProof Lab reads the Office files itself and builds Univer data from them, so the document and slide views show each file's structure, not a rendering of its original design.
+All packages are version 1.3.1.
+
+**The checks need no licence.** They use open-source Univer packages and OfficeProof Lab's own reading of each file, so a verdict is the same in the browser, on the command line and in CI.
+
+**The viewer uses Univer's Office import** (`@univerjs-pro/exchange-node`, part of Univer Pro). It runs inside the server and no file leaves it.
+
+- Workbooks and documents open with the fonts, fills, column widths, headings and tables they have in the file.
+- Decks open with their own design when a Univer browser licence is set. Without one, each slide is drawn from where its boxes sit.
+- If the import is not available, or a finding cannot be placed on the imported file, the view is built from OfficeProof Lab's own reading instead. No finding is ever hidden.
 
 ## How Ling 3.2 Flash is used
 
@@ -121,6 +134,12 @@ To host it (for example on Vercel), set two server-side variables:
 | --- | --- | --- |
 | `DATABASE_URL` | Yes | A Postgres connection string. Tables are created on first use |
 | `ANT_LING_API_KEY` | No | Turns on the notes from Ling 3.2 Flash |
+| `NEXT_PUBLIC_UNIVER_LICENSE` | No | Univer's browser licence (the contents of `license.txt`). Shows decks with their own design. Set it before the build |
+| `OFFICEPROOF_UNIVER_IMPORT` | No | Set to `off` to turn Univer's Office import off. The viewer then uses OfficeProof Lab's own reading |
+
+Univer's server licence key (`licenseKey.txt`) is not used and must never be put in a `NEXT_PUBLIC_` variable.
+
+`GET /api/import/status` reports whether Univer's Office import works on the server.
 
 ## Limits
 
@@ -128,7 +147,8 @@ To host it (for example on Vercel), set two server-side variables:
 - `.xlsx`, `.docx` and `.pptx` only. Older formats (`.xls`, `.doc`, `.ppt`) are not read.
 - Charts and pivot tables are not checked. Macros are never run.
 - Visual findings compare where boxes sit. They are not a pixel comparison.
+- Univer's Office import needs a server on Linux (glibc), macOS or Windows. Elsewhere the viewer works without it.
 
 ## Licence
 
-[MIT](LICENSE). Univer and the other libraries OfficeProof Lab uses keep their own licences.
+[MIT](LICENSE). Univer and the other libraries OfficeProof Lab uses keep their own licences. The `@univerjs-pro` packages are part of Univer Pro and come under Univer's own terms.

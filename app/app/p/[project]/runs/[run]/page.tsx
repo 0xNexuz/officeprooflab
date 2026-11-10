@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { DiffChips, FindingChip, Icon, Stamp } from '@/components/Bits';
-import { DocInspector, SheetInspector, SlideInspector } from '@/components/Inspectors';
+import { DocInspector, SheetInspector, SlideInspector, type Imported } from '@/components/Inspectors';
 import { sourceText } from '@/components/RunRow';
 import { PageState, useLoad, useShell } from '@/components/Shell';
 import UploadButton from '@/components/UploadButton';
@@ -22,7 +22,7 @@ export default function RunReport() {
   const { projects } = useShell();
   const path = `/api/p/${project}/runs/${run}`;
   const { data, error } = useLoad<RunDetail>(path);
-  const [models, setModels] = useState<{ model: Model; reference: Model | null } | null>(null);
+  const [models, setModels] = useState<{ model: Model; reference: Model | null; univer?: Imported } | null>(null);
   const [modelNote, setModelNote] = useState('');
   const [aiStatus, setAiStatus] = useState<{ configured: boolean } | null>(null);
   const [ai, setAi] = useState<AiResult | null>(null);
@@ -38,7 +38,7 @@ export default function RunReport() {
     setModels(null); setModelNote('');
     if (!data.run.hasFile) { setModelNote(data.run.source === 'ci' ? 'The pipeline sent this report without the file, so there is nothing to open here.' : 'The file for this run is no longer stored. Its report is still complete.'); return; }
     let alive = true;
-    api<{ model: Model; reference: Model | null }>(`${path}/model`).then(result => { if (alive) setModels(result); }).catch(e => { if (alive) setModelNote(errorText(e)); });
+    api<{ model: Model; reference: Model | null; univer?: Imported }>(`${path}/model`).then(result => { if (alive) setModels(result); }).catch(e => { if (alive) setModelNote(errorText(e)); });
     api<{ configured: boolean }>('/api/ai/status').then(result => { if (alive) setAiStatus(result); }).catch(() => {});
     return () => { alive = false; };
   }, [data, path]);
@@ -168,9 +168,9 @@ export default function RunReport() {
                 {referenceDeck && <label>Show the reference boxes<input className="op-switch" type="checkbox" checked={showReference} onChange={event => setShowReference(event.target.checked)} /></label>}
               </div>
               {!models && <p className="viewer-note">{modelNote || <>Opening the file<span className="busy-dots" /></>}</p>}
-              {models?.model.kind === 'xlsx' && <SheetInspector workbook={models.model} reference={models.reference} findings={findings} selected={selected} options={options} />}
-              {models?.model.kind === 'docx' && <DocInspector doc={models.model} findings={findings} selected={selected} />}
-              {models?.model.kind === 'pptx' && <SlideInspector deck={models.model} reference={referenceDeck} findings={findings} selected={selected} showReference={showReference} />}
+              {models?.model.kind === 'xlsx' && <SheetInspector workbook={models.model} reference={models.reference} findings={findings} selected={selected} options={options} imported={models.univer ?? null} />}
+              {models?.model.kind === 'docx' && <DocInspector doc={models.model} findings={findings} selected={selected} imported={models.univer ?? null} />}
+              {models?.model.kind === 'pptx' && <SlideInspector deck={models.model} reference={referenceDeck} findings={findings} selected={selected} showReference={showReference} imported={models.univer ?? null} />}
             </section>
 
             <details className="op-card panel">
