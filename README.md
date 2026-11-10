@@ -128,3 +128,7 @@ To host it (for example on Vercel), set two server-side variables:
 - `.xlsx`, `.docx` and `.pptx` only. Older formats (`.xls`, `.doc`, `.ppt`) are not read.
 - Charts and pivot tables are not checked. Macros are never run.
 - Visual findings compare where boxes sit. They are not a pixel comparison.
+
+## Licence
+
+[MIT](LICENSE). Univer and the other libraries OfficeProof Lab uses keep their own licences.
