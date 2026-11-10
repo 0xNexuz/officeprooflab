@@ -45,7 +45,12 @@ export async function importWithUniver(bytes: Uint8Array, kind: FileKind, maxCha
     if (!data || typeof data !== 'object') return null;
     if (JSON.stringify(data).length > Math.min(maxChars, MAX_DATA_CHARS)) return null;
     return { data, ms: Math.round(performance.now() - started) };
-  } catch { return null; } finally { clearTimeout(timer); }
+  } catch (error) {
+    // The message comes from the converter and names no user data; the file is always called `file.<kind>` here.
+    const code = (error as { code?: unknown } | null)?.code;
+    console.warn(`Univer's Office import could not read a ${kind} file${typeof code === 'string' ? ` (${code})` : ''}: ${String(error instanceof Error ? error.message : error).slice(0, 300)}`);
+    return null;
+  } finally { clearTimeout(timer); }
 }
 
 const PROBE_SHEET = '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1"><v>1</v></c><c r="B1"><f>A1+1</f><v>2</v></c></row></sheetData></worksheet>';
