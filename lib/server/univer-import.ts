@@ -2,6 +2,10 @@
 // the viewer can show a workbook, document or deck with the design it has in the file. It runs inside this server; no
 // file leaves it. The checks never use this reading. They keep the engine's own, so a verdict is the same on the
 // command line and in CI, where this package is not installed.
+//
+// The converter's native part is pinned to 1.1.0 in package.json ("overrides"). The 1.0.x builds that Univer pairs
+// with SDK 1.3.1 need glibc 2.35, and Vercel's runtime has 2.34; 1.1.0 needs 2.28. It reads the sample files into the
+// same data as 1.0.6. Drop the override when every Univer package here moves to 1.4.0, which pairs with 1.1.x itself.
 import { strToU8, zipSync } from 'fflate';
 import type { FileKind } from '../engine/types.ts';
 
