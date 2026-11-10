@@ -20,8 +20,9 @@ const CSP = [
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: process.cwd(),
-  // Univer's Office import has a native part, so it is loaded from node_modules as it is and never bundled.
-  serverExternalPackages: ['@univerjs-pro/exchange-node', '@univerjs-pro/exchange-node-binding'],
+  // Univer's Office import has a native part. Only that part is loaded from node_modules as it is; the rest is bundled
+  // with the server code, because left outside it loads Univer's CommonJS build, which cannot load on every host.
+  serverExternalPackages: ['@univerjs-pro/exchange-node-binding'],
   // The native part is chosen at run time, so the build cannot see that the two routes below need it.
   outputFileTracingIncludes: {
     '/api/import/status': ['./node_modules/@univerjs-pro/exchange-node-binding*/**/*'],
