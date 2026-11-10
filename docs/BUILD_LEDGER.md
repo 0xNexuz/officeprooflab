@@ -59,3 +59,8 @@ Append-only record of milestones (M), issues (I) and questions (Q).
 
 ## I-004: Rule wording
 - A rule for exactly one table read "The document has exactly 1 tables". The noun now follows the last number named ("exactly 1 table", "at least 1 slide", "at most 3 tables"). `npm test` (41 pass), `npm run typecheck`, `npm run build`, `npm run build:cli && npm run check:samples`.
+
+## M-006: README rewritten for readers of the public repository (10 November 2026)
+- **Request (owner):** make the README more presentable: clean, easy to understand, with what a client needs and nothing else.
+- **Changed:** the README now leads with what the product does, four screens, the three labels, what is checked, how to try it on the live site, CI, how Univer and Ling 3.2 Flash are used, how to run or host it, and limits. Development commands, the folder table and the links to internal working documents were taken out. Two screens were added (`run-fixed.jpg`, `ai-notes.jpg`) and one unused screen removed.
+- **Evidence for the new screens:** both were captured from a local build with the sample files. The notes in `ai-notes.jpg` are the six Ling 3.2 Flash gave on the live site (M-005), loaded unchanged; the README says so under the image.
